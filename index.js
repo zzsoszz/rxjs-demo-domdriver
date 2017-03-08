@@ -25,8 +25,7 @@ function main(DomSource)
 
 function makeDomDriver(selector)
 {
-  function DomDriver(obj$) {
-           function createElement(obj){
+   function createElement(obj){
             const element = document.createElement(obj.tagName);
             obj.children
               .filter(c=> typeof c=='object')
@@ -37,7 +36,8 @@ function makeDomDriver(selector)
                .filter(c=> typeof c=='string')
                .forEach(c=>element.innerHTML=c);
             return element;
-          }
+  }
+  function DomDriver(obj$) {
           obj$.subscribe(obj => {
             const container = document.querySelector(selector);
             container.innerHTML='';
@@ -51,7 +51,6 @@ function makeDomDriver(selector)
           //      return Rx.Observable.fromEvent(document,eventType).filter(ev=>ev.target.tagName===tagName.toUpperCase())
           //   }
           // };
-          
           return DomSource;
   }
   return DomDriver;
