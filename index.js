@@ -3,19 +3,60 @@ function main(DomSource)
 {
   const $click=DomSource;
   return {
-    Dom:$click.switchMap(x=>Rx.Observable.timer(0,1000).map(i =>{return "second "+i;})),
-    Log:Rx.Observable.timer(0,2000).map(i =>{return "second "+i;})
+    Dom: $click.startWith(null).switchMap(x => Rx.Observable.timer(0, 1000).map(i => {
+      return {
+        tagName: 'div',
+        children: [
+          {
+            tagName:"SPAN",
+            children:[
+              "Seconds "+i
+            ]
+          }
+        ]
+      }
+    })),
+    Log: Rx.Observable.timer(0, 2000).map(i => {
+      return "second " + i;
+    })
   };
 }
-function DomDriver(text$)
+
+
+function makeDomDriver(selector)
 {
-  text$.subscribe(value => {
-      const container=document.querySelector("#app");
-      container.textContent=value;
-  });
-  const DomSource=Rx.Observable.fromEvent(document,"click");
-  return DomSource;
+  function DomDriver(obj$) {
+           function createElement(obj){
+            const element = document.createElement(obj.tagName);
+            obj.children
+              .filter(c=> typeof c=='object')
+              .map(createElement)
+              .forEach(c=>element.appendChild(c))
+            ;
+            obj.children
+               .filter(c=> typeof c=='string')
+               .forEach(c=>element.innerHTML=c);
+            return element;
+          }
+          obj$.subscribe(obj => {
+            const container = document.querySelector(selector);
+            container.innerHTML='';
+            const ele = createElement(obj);
+            container.appendChild(ele);
+          });
+          const DomSource = Rx.Observable.fromEvent(document, "click");
+          // const DomSource={
+          //   selectEvents:function(tagName,eventType)
+          //   {
+          //      return Rx.Observable.fromEvent(document,eventType).filter(ev=>ev.target.tagName===tagName.toUpperCase())
+          //   }
+          // };
+          
+          return DomSource;
+  }
+  return DomDriver;
 }
+
 
 function ConsoleLogDriver(msg$){
   msg$.subscribe(value => {
@@ -34,7 +75,7 @@ function run(mainFn,dirvers)
 }
 
 var drivers={
-  Dom:DomDriver,
+  Dom:makeDomDriver("#app"),
   Log:ConsoleLogDriver
 };
 run(main,drivers);
